@@ -1,0 +1,6 @@
+*.cabal
+cabal.project.local
+dist-newstyle
+
+.envrc
+.direnv

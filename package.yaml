@@ -1,0 +1,51 @@
+name:                xdg-basedir-compliant
+version:             1.0.0
+github:              "kephas/xdg-basedir-compliant"
+license:             BSD3
+author:              "Pierre Thierry"
+maintainer:          "pierre@nothos.net"
+copyright:           "2022 Pierre Thierry"
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+synopsis:            XDG Basedir
+category:            System
+description:         See README.md
+
+dependencies:
+- base >= 4.7 && < 5
+- filepath
+- polysemy
+- polysemy-plugin
+
+default-extensions:
+- BlockArguments
+- FlexibleContexts
+- GADTs
+- LambdaCase
+- PolyKinds
+- RankNTypes
+- ScopedTypeVariables
+- TypeOperators
+# Polysemy still needs {-# LANGUAGE TemplateHaskell, DataKinds #-}
+
+library:
+  source-dirs: src
+  ghc-options:
+  - -fplugin=Polysemy.Plugin
+
+tests:
+  xdg-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - xdg-basedir-compliant
+    - hspec
+    - QuickCheck
