@@ -1,32 +1,28 @@
 module System.XDG where
 
-import           Data.Maybe                     ( fromMaybe )
+import           Data.ByteString.Lazy           ( ByteString )
+import           Data.Either                    ( fromRight )
 import           Polysemy
-import           System.FilePath                ( (</>) )
+import           Polysemy.Error                 ( runError )
 import           System.XDG.Env
-
-
-dataHome :: Member Env r => Sem r FilePath
-dataHome = do
-  home <- fromMaybe "" <$> getEnv "HOME" --TODO: throw error if no $HOME
-  fromMaybe (home </> ".local/share") <$> getEnv "XDG_DATA_HOME"
-
-configHome :: Member Env r => Sem r FilePath
-configHome = do
-  home <- fromMaybe "" <$> getEnv "HOME" --TODO: throw error if no $HOME
-  fromMaybe (home </> ".config") <$> getEnv "XDG_CONFIG_HOME"
-
-stateHome :: Member Env r => Sem r FilePath
-stateHome = do
-  home <- fromMaybe "" <$> getEnv "HOME" --TODO: throw error if no $HOME
-  fromMaybe (home </> ".local/state") <$> getEnv "XDG_STATE_HOME"
+import           System.XDG.FileSystem
+import qualified System.XDG.Internal           as In
 
 
 getDataHome :: IO FilePath
-getDataHome = runM $ runEnvIO $ dataHome
+getDataHome = runM $ runEnvIO $ In.getDataHome
 
 getConfigHome :: IO FilePath
-getConfigHome = runM $ runEnvIO $ configHome
+getConfigHome = runM $ runEnvIO $ In.getConfigHome
 
 getStateHome :: IO FilePath
-getStateHome = runM $ runEnvIO $ stateHome
+getStateHome = runM $ runEnvIO $ In.getStateHome
+
+getDataDirs :: IO [FilePath]
+getDataDirs = runM $ runEnvIO $ In.getDataDirs
+
+readData :: Monoid b => (ByteString -> b) -> FilePath -> IO b
+readData parse file = do
+  fromRight mempty
+    <$> runM (runError $ runReadFileIO $ runEnvIO $ In.readData parse file)
+

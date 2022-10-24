@@ -16,9 +16,11 @@ description:         See README.md
 
 dependencies:
 - base >= 4.7 && < 5
+- bytestring
 - filepath
 - polysemy
 - polysemy-plugin
+- split
 
 default-extensions:
 - BlockArguments
@@ -45,7 +47,9 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     - -Wall
+    - -fplugin=Polysemy.Plugin
     dependencies:
     - xdg-basedir-compliant
+    - aeson
     - hspec
     - QuickCheck
