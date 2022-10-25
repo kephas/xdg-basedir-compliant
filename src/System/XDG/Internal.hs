@@ -8,6 +8,7 @@ import           Data.List.Split                ( endBy )
 import           Data.Maybe                     ( fromMaybe )
 import           Polysemy
 import           Polysemy.Error
+import           Polysemy.Operators
 import           Prelude                 hiding ( readFile )
 import           System.FilePath                ( (</>) )
 import           System.XDG.Env
@@ -15,23 +16,23 @@ import           System.XDG.Error
 import           System.XDG.FileSystem
 
 
-getDataHome :: Member Env r => Sem r FilePath
+getDataHome :: Env -@> FilePath
 getDataHome = do
   home <- fromMaybe "" <$> getEnv "HOME" --TODO: throw error if no $HOME
   fromMaybe (home </> ".local/share") <$> getEnv "XDG_DATA_HOME"
 
-getConfigHome :: Member Env r => Sem r FilePath
+getConfigHome :: Env -@> FilePath
 getConfigHome = do
   home <- fromMaybe "" <$> getEnv "HOME" --TODO: throw error if no $HOME
   fromMaybe (home </> ".config") <$> getEnv "XDG_CONFIG_HOME"
 
-getStateHome :: Member Env r => Sem r FilePath
+getStateHome :: Env -@> FilePath
 getStateHome = do
   home <- fromMaybe "" <$> getEnv "HOME" --TODO: throw error if no $HOME
   fromMaybe (home </> ".local/state") <$> getEnv "XDG_STATE_HOME"
 
 
-getDataDirs :: Member Env r => Sem r [FilePath]
+getDataDirs :: Env -@> [FilePath]
 getDataDirs = do
   dataHome <- getDataHome
   dirs     <-
@@ -45,8 +46,7 @@ getDataDirs = do
   noEmpty x         = x
 
 
-readDataFile
-  :: Members '[Env , Error XDGError , ReadFile a] r => FilePath -> Sem r a
+readDataFile :: FilePath -> '[Env , Error XDGError , ReadFile a] >@> a
 readDataFile file = do
   dirs <- getDataDirs
   foldr tryOne (throw NoReadableFile) dirs
@@ -54,10 +54,10 @@ readDataFile file = do
 
 
 readData
-  :: (Members '[Env , Error XDGError , ReadFile a] r, Monoid b)
+  :: Monoid b
   => (a -> b)
   -> FilePath
-  -> Sem r b
+  -> '[Env , Error XDGError , ReadFile a] >@> b
 readData parse file = do
   files <- map (</> file) <$> getDataDirs
   fold

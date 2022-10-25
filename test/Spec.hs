@@ -6,6 +6,7 @@ import           Data.Maybe                     ( fromMaybe )
 import           Data.Monoid                    ( Sum(..) )
 import           Polysemy
 import           Polysemy.Error
+import           Polysemy.Operators
 import           System.Environment             ( setEnv )
 import qualified System.XDG                    as XDGIO
 import           System.XDG.Env
@@ -38,7 +39,7 @@ allFiles = userFiles ++ sysFiles
 testXDG
   :: EnvList
   -> FileList Integer
-  -> Sem '[Env , ReadFile Integer , Error XDGError] a
+  -> '[Env , ReadFile Integer , Error XDGError] @> a
   -> Either XDGError a
 testXDG env files = run . runError . runReadFileList files . runEnvList env
 
