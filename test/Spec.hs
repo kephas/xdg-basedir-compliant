@@ -28,10 +28,14 @@ fullEnv =
   ]
 
 userFiles :: FileList Integer
-userFiles = [("/data/foo/bar", 1)]
+userFiles = [("/data/foo/bar", 1), ("/config/foo/bar", 10)]
 
 sysFiles :: FileList Integer
-sysFiles = [("/usr/local/share/foo/bar", 2), ("/usr/share/foo/bar", 3)]
+sysFiles =
+  [ ("/usr/local/share/foo/bar", 2)
+  , ("/usr/share/foo/bar"      , 3)
+  , ("/etc/xdg/foo/bar"        , 20)
+  ]
 
 allFiles :: FileList Integer
 allFiles = userFiles ++ sysFiles
@@ -69,6 +73,9 @@ main = hspec $ do
         testXDG fullEnv allFiles (readData show "foo/bar")
           `shouldBe` Right "123"
         testXDG fullEnv [] (readData show "foo/bar") `shouldBe` Right ""
+      it "opens a config file" $ do
+        testXDG fullEnv userFiles (readConfigFile "foo/bar") `shouldBe` Right 10
+        testXDG fullEnv sysFiles (readConfigFile "foo/bar") `shouldBe` Right 20
     describe "IO interpreter" $ do
       it "merges data files" $ do
         setEnv "XDG_DATA_HOME" "./test/dir1"

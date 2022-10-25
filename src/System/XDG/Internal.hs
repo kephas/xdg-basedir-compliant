@@ -62,3 +62,16 @@ readData parse file = do
   files <- map (</> file) <$> getDataDirs
   fold
     <$> traverse (\file -> catch (parse <$> readFile file) (pure mempty)) files
+
+
+getConfigDirs :: Env -@> [FilePath]
+getConfigDirs = do
+  configHome <- getConfigHome
+  dirs       <- endBy ":" . fromMaybe "/etc/xdg" <$> getEnv "XDG_CONFIG_DIRS"
+  pure $ configHome : dirs
+
+readConfigFile :: FilePath -> '[Env, Error XDGError, ReadFile a] >@> a
+readConfigFile file = do
+  dirs <- getConfigDirs
+  foldr tryOne (throw NoReadableFile) dirs
+  where tryOne dir next = catch (readFile $ dir </> file) (const next)

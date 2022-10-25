@@ -4,6 +4,7 @@ import           Data.ByteString.Lazy           ( ByteString )
 import           Data.Either                    ( fromRight )
 import           Polysemy
 import           Polysemy.Error                 ( runError )
+import qualified System.IO.Error               as IO
 import           System.XDG.Env
 import           System.XDG.FileSystem
 import qualified System.XDG.Internal           as In
@@ -26,3 +27,15 @@ readData parse file = do
   fromRight mempty
     <$> runM (runError $ runReadFileIO $ runEnvIO $ In.readData parse file)
 
+getConfigDirs :: IO [FilePath]
+getConfigDirs = runM $ runEnvIO $ In.getConfigDirs
+
+readConfigFile :: FilePath -> IO ByteString
+readConfigFile file = do
+  result <- runM $ runError $ runReadFileIO $ runEnvIO $ In.readConfigFile file
+  either raiseIO pure result
+ where
+  raiseIO _error = IO.ioError $ IO.mkIOError IO.doesNotExistErrorType
+                                             "System.XDG.readConfigFile"
+                                             Nothing
+                                             (Just file)
