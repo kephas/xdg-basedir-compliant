@@ -27,6 +27,10 @@ getConfigHome = getEnvHome "XDG_CONFIG_HOME" ".config"
 getStateHome :: Env -@> FilePath
 getStateHome = getEnvHome "XDG_STATE_HOME" ".local/state"
 
+getRuntimeDir :: '[Env, Error XDGError] >@> FilePath
+getRuntimeDir = maybe (throw $ MissingEnv env) pure =<< getEnv env
+  where env = "XDG_RUNTIME_DIR"
+
 getDataDirs :: Env -@> [FilePath]
 getDataDirs =
   getEnvDirs getDataHome "XDG_DATA_DIRS" ["/usr/local/share/", "/usr/share/"]
@@ -46,12 +50,21 @@ readConfigFile = readFileFromDirs getConfigDirs
 readConfig :: Monoid b => (a -> b) -> FilePath -> XDGReader a b
 readConfig = appendEnvFiles getConfigDirs
 
+readStateFile :: FilePath -> XDGReader a a
+readStateFile = readFileFromDir getStateHome
+
+readRuntimeFile :: FilePath -> XDGReader a a
+readRuntimeFile = readFileFromDir getRuntimeDir
+
 
 type XDGReader a b = '[Env , Error XDGError , ReadFile a] >@> b
 
+getUserHome :: Env -@> FilePath
+getUserHome = fromMaybe "" <$> getEnv "HOME" --TODO: throw error if no $HOME
+
 getEnvHome :: String -> FilePath -> Env -@> FilePath
 getEnvHome env defaultHome = do
-  home <- fromMaybe "" <$> getEnv "HOME" --TODO: throw error if no $HOME
+  home <- getUserHome
   fromMaybe (home </> defaultHome) <$> getEnv env
 
 getEnvDirs :: (Env -@> FilePath) -> String -> [String] -> Env -@> [FilePath]
@@ -62,6 +75,12 @@ getEnvDirs getHome env defaultDirs = do
  where
   noEmpty (Just []) = Nothing
   noEmpty x         = x
+
+readFileFromDir
+  :: '[Env, Error XDGError] >@> FilePath -> FilePath -> XDGReader a a
+readFileFromDir getDir file = do
+  dir <- getDir
+  readFile $ dir </> file
 
 readFileFromDirs
   :: Env -@> [FilePath]
