@@ -3,6 +3,7 @@
 
 module System.XDG.Internal where
 
+import           Data.ByteString.Lazy           ( ByteString )
 import           Data.Foldable                  ( fold )
 import           Data.List.Split                ( endBy )
 import           Data.Maybe                     ( fromMaybe )
@@ -11,6 +12,7 @@ import           Polysemy.Error
 import           Polysemy.Operators
 import           Prelude                 hiding ( readFile )
 import           System.FilePath                ( (</>) )
+import qualified System.IO.Error               as IO
 import           System.XDG.Env
 import           System.XDG.Error
 import           System.XDG.FileSystem
@@ -75,3 +77,17 @@ readConfigFile file = do
   dirs <- getConfigDirs
   foldr tryOne (throw NoReadableFile) dirs
   where tryOne dir next = catch (readFile $ dir </> file) (const next)
+
+
+readFileIO
+  :: (FilePath -> '[Env, Error XDGError, ReadFile ByteString] >@> ByteString)
+  -> FilePath
+  -> IO ByteString
+readFileIO reader file = do
+  result <- runM $ runError $ runReadFileIO $ runEnvIO $ reader file
+  either raiseIO pure result
+ where
+  raiseIO _error = IO.ioError $ IO.mkIOError IO.doesNotExistErrorType
+                                             "System.XDG.readConfigFile"
+                                             Nothing
+                                             (Just file)

@@ -77,8 +77,10 @@ main = hspec $ do
         testXDG fullEnv userFiles (readConfigFile "foo/bar") `shouldBe` Right 10
         testXDG fullEnv sysFiles (readConfigFile "foo/bar") `shouldBe` Right 20
     describe "IO interpreter" $ do
-      it "merges data files" $ do
+      it "opens a data file" $ do
         setEnv "XDG_DATA_HOME" "./test/dir1"
         setEnv "XDG_DATA_DIRS" "./test/dir2:./test/dir3"
+        decodeInteger <$> XDGIO.readDataFile "foo/bar.json" `shouldReturn` 1
+      it "merges data files" $ do
         XDGIO.readData decodeInteger "foo/bar.json" `shouldReturn` 3
         XDGIO.readData decodeInteger "foo/baz.json" `shouldReturn` 30

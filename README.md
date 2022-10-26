@@ -10,7 +10,7 @@ This is a compliant implementation of the [XDG Base Directory Specification](htt
   - [ ] write file
 - [ ] `$XDG_CONFIG_HOME`
   - [X] get path
-  - [ ] read file
+  - [X] read file
   - [ ] write file
 - [ ] `$XDG_STATE_HOME`
   - [X] get path
@@ -21,8 +21,8 @@ This is a compliant implementation of the [XDG Base Directory Specification](htt
   - [X] read best file
   - [X] merge files
 - [ ] `$XDG_CONFIG_DIRS`
-  - [ ] get path list
-  - [ ] read best file
+  - [X] get path list
+  - [X] read best file
   - [ ] merge files
 - [ ] `$XDG_CACHE_HOME`
   - [ ] get path
