@@ -27,6 +27,9 @@ getConfigHome = getEnvHome "XDG_CONFIG_HOME" ".config"
 getStateHome :: Env -@> FilePath
 getStateHome = getEnvHome "XDG_STATE_HOME" ".local/state"
 
+getCacheHome :: Env -@> FilePath
+getCacheHome = getEnvHome "XDG_CACHE_HOME" ".local/cache"
+
 getRuntimeDir :: '[Env, Error XDGError] >@> FilePath
 getRuntimeDir = maybe (throw $ MissingEnv env) pure =<< getEnv env
   where env = "XDG_RUNTIME_DIR"
@@ -52,6 +55,9 @@ readConfig = appendEnvFiles getConfigDirs
 
 readStateFile :: FilePath -> XDGReader a a
 readStateFile = readFileFromDir getStateHome
+
+readCacheFile :: FilePath -> XDGReader a a
+readCacheFile = readFileFromDir getCacheHome
 
 readRuntimeFile :: FilePath -> XDGReader a a
 readRuntimeFile = readFileFromDir getRuntimeDir

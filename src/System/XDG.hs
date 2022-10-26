@@ -22,6 +22,9 @@ getConfigHome = runM $ runEnvIO $ In.getConfigHome
 getStateHome :: IO FilePath
 getStateHome = runM $ runEnvIO $ In.getStateHome
 
+getCacheHome :: IO FilePath
+getCacheHome = runM $ runEnvIO $ In.getCacheHome
+
 getDataDirs :: IO [FilePath]
 getDataDirs = runM $ runEnvIO $ In.getDataDirs
 
@@ -39,5 +42,7 @@ getConfigDirs = runM $ runEnvIO $ In.getConfigDirs
 readConfigFile :: FilePath -> IO ByteString
 readConfigFile = In.readFileIO In.readConfigFile
 
+readCacheFile :: FilePath -> IO ByteString
+readCacheFile = In.readFileIO In.readCacheFile
 
 

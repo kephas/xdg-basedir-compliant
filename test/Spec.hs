@@ -25,6 +25,7 @@ fullEnv =
   , ("XDG_CONFIG_HOME", "/config")
   , ("XDG_DATA_HOME"  , "/data")
   , ("XDG_STATE_HOME" , "/state")
+  , ("XDG_CACHE_HOME" , "/cache")
   , ("XDG_RUNTIME_DIR", "/runtime")
   ]
 
@@ -33,7 +34,8 @@ userFiles =
   [ ("/data/foo/bar"   , 1)
   , ("/config/foo/bar" , 10)
   , ("/state/foo/bar"  , 100)
-  , ("/runtime/foo/bar", 200)
+  , ("/cache/foo/bar"  , 200)
+  , ("/runtime/foo/bar", 300)
   ]
 
 sysFiles :: FileList Integer
@@ -90,9 +92,11 @@ main = hspec $ do
         testXDG fullEnv [] (readConfig show "foo/bar") `shouldBe` Right ""
       it "opens a state file" $ do
         testXDG fullEnv userFiles (readStateFile "foo/bar") `shouldBe` Right 100
+      it "opens a cache file" $ do
+        testXDG fullEnv userFiles (readCacheFile "foo/bar") `shouldBe` Right 200
       it "opens a runtime file" $ do
         testXDG fullEnv userFiles (readRuntimeFile "foo/bar")
-          `shouldBe` Right 200
+          `shouldBe` Right 300
     describe "IO interpreter" $ do
       it "opens a data file" $ do
         setEnv "XDG_DATA_HOME" "./test/dir1"

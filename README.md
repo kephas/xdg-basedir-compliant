@@ -25,8 +25,8 @@ This is a compliant implementation of the [XDG Base Directory Specification](htt
   - [X] read best file
   - [X] merge files
 - [ ] `$XDG_CACHE_HOME`
-  - [ ] get path
-  - [ ] read file
+  - [X] get path
+  - [X] read file
   - [ ] write file
 - [ ] `$XDG_RUNTIME_DIR`
   - [ ] get path
