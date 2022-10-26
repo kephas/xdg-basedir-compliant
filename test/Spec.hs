@@ -76,6 +76,12 @@ main = hspec $ do
       it "opens a config file" $ do
         testXDG fullEnv userFiles (readConfigFile "foo/bar") `shouldBe` Right 10
         testXDG fullEnv sysFiles (readConfigFile "foo/bar") `shouldBe` Right 20
+        testXDG fullEnv allFiles (readConfigFile "foo/baz")
+          `shouldBe` Left NoReadableFile
+      it "merges config files" $ do
+        testXDG fullEnv allFiles (readConfig show "foo/bar")
+          `shouldBe` Right "1020"
+        testXDG fullEnv [] (readConfig show "foo/bar") `shouldBe` Right ""
     describe "IO interpreter" $ do
       it "opens a data file" $ do
         setEnv "XDG_DATA_HOME" "./test/dir1"
