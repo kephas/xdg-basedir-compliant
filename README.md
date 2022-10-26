@@ -20,10 +20,10 @@ This is a compliant implementation of the [XDG Base Directory Specification](htt
   - [X] get path list
   - [X] read best file
   - [X] merge files
-- [ ] `$XDG_CONFIG_DIRS`
+- [X] `$XDG_CONFIG_DIRS`
   - [X] get path list
   - [X] read best file
-  - [ ] merge files
+  - [X] merge files
 - [ ] `$XDG_CACHE_HOME`
   - [ ] get path
   - [ ] read file
