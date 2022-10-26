@@ -45,4 +45,7 @@ readConfigFile = In.readFileIO In.readConfigFile
 readCacheFile :: FilePath -> IO ByteString
 readCacheFile = In.readFileIO In.readCacheFile
 
+readStateFile :: FilePath -> IO ByteString
+readStateFile = In.readFileIO In.readStateFile
+
 

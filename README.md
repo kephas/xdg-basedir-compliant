@@ -14,7 +14,7 @@ This is a compliant implementation of the [XDG Base Directory Specification](htt
   - [ ] write file
 - [ ] `$XDG_STATE_HOME`
   - [X] get path
-  - [ ] read file
+  - [X] read file
   - [ ] write file
 - [X] `$XDG_DATA_DIRS`
   - [X] get path list
