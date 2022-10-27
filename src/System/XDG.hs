@@ -25,6 +25,9 @@ getStateHome = In.runXDGIO In.getStateHome
 getCacheHome :: IO FilePath
 getCacheHome = In.runXDGIO In.getCacheHome
 
+getRuntimeDir :: IO FilePath
+getRuntimeDir = In.runXDGIO In.getRuntimeDir
+
 getDataDirs :: IO [FilePath]
 getDataDirs = In.runXDGIO In.getDataDirs
 
@@ -45,5 +48,8 @@ readCacheFile file = In.runXDGIO $ In.readCacheFile file
 
 readStateFile :: FilePath -> IO ByteString
 readStateFile file = In.runXDGIO $ In.readStateFile file
+
+readRuntimeFile :: FilePath -> IO ByteString
+readRuntimeFile file = In.runXDGIO $ In.readStateFile file
 
 
