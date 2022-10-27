@@ -32,6 +32,7 @@ This is a compliant implementation of the [XDG Base Directory Specification](htt
   - [X] get path
   - [X] read file
   - [ ] write file
+- [ ] treat relative paths as invalid
 
 # Build
 
