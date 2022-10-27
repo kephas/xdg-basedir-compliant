@@ -18,23 +18,22 @@ import           System.XDG.Error
 import           System.XDG.FileSystem
 
 
-getDataHome :: Env -@> FilePath
+getDataHome :: XDGEnv FilePath
 getDataHome = getEnvHome "XDG_DATA_HOME" ".local/share"
 
-getConfigHome :: Env -@> FilePath
+getConfigHome :: XDGEnv FilePath
 getConfigHome = getEnvHome "XDG_CONFIG_HOME" ".config"
 
-getStateHome :: Env -@> FilePath
+getStateHome :: XDGEnv FilePath
 getStateHome = getEnvHome "XDG_STATE_HOME" ".local/state"
 
-getCacheHome :: Env -@> FilePath
+getCacheHome :: XDGEnv FilePath
 getCacheHome = getEnvHome "XDG_CACHE_HOME" ".local/cache"
 
-getRuntimeDir :: '[Env, Error XDGError] >@> FilePath
-getRuntimeDir = maybe (throw $ MissingEnv env) pure =<< getEnv env
-  where env = "XDG_RUNTIME_DIR"
+getRuntimeDir :: XDGEnv FilePath
+getRuntimeDir = requireEnv "XDG_RUNTIME_DIR"
 
-getDataDirs :: Env -@> [FilePath]
+getDataDirs :: XDGEnv [FilePath]
 getDataDirs =
   getEnvDirs getDataHome "XDG_DATA_DIRS" ["/usr/local/share/", "/usr/share/"]
 
@@ -44,7 +43,7 @@ readDataFile = readFileFromDirs getDataDirs
 readData :: Monoid b => (a -> b) -> FilePath -> XDGReader a b
 readData = appendEnvFiles getDataDirs
 
-getConfigDirs :: Env -@> [FilePath]
+getConfigDirs :: XDGEnv [FilePath]
 getConfigDirs = getEnvDirs getConfigHome "XDG_CONFIG_DIRS" ["/etc/xdg"]
 
 readConfigFile :: FilePath -> '[Env, Error XDGError, ReadFile a] >@> a
@@ -63,46 +62,40 @@ readRuntimeFile :: FilePath -> XDGReader a a
 readRuntimeFile = readFileFromDir getRuntimeDir
 
 
+type XDGEnv a = '[Env , Error XDGError] >@> a
+
 type XDGReader a b = '[Env , Error XDGError , ReadFile a] >@> b
 
-getUserHome :: Env -@> FilePath
-getUserHome = fromMaybe "" <$> getEnv "HOME" --TODO: throw error if no $HOME
+requireEnv :: String -> XDGEnv String
+requireEnv env = maybe (throw $ MissingEnv env) pure =<< getEnv env
 
-getEnvHome :: String -> FilePath -> Env -@> FilePath
-getEnvHome env defaultHome = do
-  home <- getUserHome
-  fromMaybe (home </> defaultHome) <$> getEnv env
+getEnvHome :: String -> FilePath -> XDGEnv FilePath
+getEnvHome env defaultDir = do
+  home <- requireEnv "HOME"
+  fromMaybe (home </> defaultDir) <$> getEnv env
 
-getEnvDirs :: (Env -@> FilePath) -> String -> [String] -> Env -@> [FilePath]
-getEnvDirs getHome env defaultDirs = do
-  dirsHome <- getHome
-  dirs     <- fromMaybe defaultDirs . noEmpty . fmap (endBy ":") <$> getEnv env
-  pure $ dirsHome : dirs
+getEnvDirs :: (XDGEnv FilePath) -> String -> [String] -> XDGEnv [FilePath]
+getEnvDirs getUserDir env defaultDirs = do
+  userDir <- getUserDir
+  dirs    <- fromMaybe defaultDirs . noEmpty . fmap (endBy ":") <$> getEnv env
+  pure $ userDir : dirs
  where
   noEmpty (Just []) = Nothing
   noEmpty x         = x
 
-readFileFromDir
-  :: '[Env, Error XDGError] >@> FilePath -> FilePath -> XDGReader a a
+readFileFromDir :: XDGEnv FilePath -> FilePath -> XDGReader a a
 readFileFromDir getDir file = do
   dir <- getDir
   readFile $ dir </> file
 
-readFileFromDirs
-  :: Env -@> [FilePath]
-  -> FilePath
-  -> '[Env , Error XDGError , ReadFile a] >@> a
+readFileFromDirs :: XDGEnv [FilePath] -> FilePath -> XDGReader a a
 readFileFromDirs getDirs file = do
   dirs <- getDirs
   foldr tryOne (throw NoReadableFile) dirs
   where tryOne dir next = catch (readFile $ dir </> file) (const next)
 
 appendEnvFiles
-  :: Monoid b
-  => Env -@> [FilePath]
-  -> (a -> b)
-  -> FilePath
-  -> '[Env , Error XDGError , ReadFile a] >@> b
+  :: Monoid b => XDGEnv [FilePath] -> (a -> b) -> FilePath -> XDGReader a b
 appendEnvFiles getDirs parse file = do
   files <- map (</> file) <$> getDirs
   fold
