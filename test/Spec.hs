@@ -2,7 +2,9 @@
 
 import           Data.Aeson                     ( decode )
 import           Data.ByteString.Lazy           ( ByteString )
-import           Data.Maybe                     ( fromMaybe )
+import           Data.Maybe                     ( fromJust
+                                                , fromMaybe
+                                                )
 import           Data.Monoid                    ( Sum(..) )
 import           Polysemy
 import           Polysemy.Error
@@ -77,6 +79,8 @@ main = hspec $ do
         testXDG fullEnv sysFiles (readDataFile "foo/bar") `shouldBe` Right 2
         testXDG fullEnv allFiles (readDataFile "foo/baz")
           `shouldBe` Left NoReadableFile
+        testXDG fullEnv [] (maybeRead $ readDataFile "foo/bar")
+          `shouldBe` Right Nothing
       it "merges data files" $ do
         testXDG fullEnv allFiles (readData show "foo/bar")
           `shouldBe` Right "123"
@@ -101,7 +105,9 @@ main = hspec $ do
       it "opens a data file" $ do
         setEnv "XDG_DATA_HOME" "./test/dir1"
         setEnv "XDG_DATA_DIRS" "./test/dir2:./test/dir3"
-        decodeInteger <$> XDGIO.readDataFile "foo/bar.json" `shouldReturn` 1
+        (decodeInteger . fromJust)
+          <$>            XDGIO.readDataFile "foo/bar.json"
+          `shouldReturn` 1
       it "merges data files" $ do
         XDGIO.readData decodeInteger "foo/bar.json" `shouldReturn` 3
         XDGIO.readData decodeInteger "foo/baz.json" `shouldReturn` 30

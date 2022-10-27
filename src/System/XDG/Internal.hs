@@ -1,5 +1,5 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE LambdaCase #-}
 
 module System.XDG.Internal where
 
@@ -108,6 +108,14 @@ appendEnvFiles getDirs parse file = do
   files <- map (</> file) <$> getDirs
   fold
     <$> traverse (\file -> catch (parse <$> readFile file) (pure mempty)) files
+
+maybeRead :: XDGReader a a -> XDGReader a (Maybe a)
+maybeRead action = catch
+  (Just <$> action)
+  (\case
+    NoReadableFile -> pure Nothing
+    error          -> throw error
+  )
 
 
 runXDGIO :: XDGReader ByteString a -> IO a

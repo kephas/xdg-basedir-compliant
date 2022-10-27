@@ -31,8 +31,8 @@ getRuntimeDir = In.runXDGIO In.getRuntimeDir
 getDataDirs :: IO [FilePath]
 getDataDirs = In.runXDGIO In.getDataDirs
 
-readDataFile :: FilePath -> IO ByteString
-readDataFile file = In.runXDGIO $ In.readDataFile file
+readDataFile :: FilePath -> IO (Maybe ByteString)
+readDataFile file = In.runXDGIO $ In.maybeRead $ In.readDataFile file
 
 readData :: Monoid b => (ByteString -> b) -> FilePath -> IO b
 readData parse file = In.runXDGIO $ In.readData parse file
@@ -40,16 +40,16 @@ readData parse file = In.runXDGIO $ In.readData parse file
 getConfigDirs :: IO [FilePath]
 getConfigDirs = In.runXDGIO In.getConfigDirs
 
-readConfigFile :: FilePath -> IO ByteString
-readConfigFile file = In.runXDGIO $ In.readConfigFile file
+readConfigFile :: FilePath -> IO (Maybe ByteString)
+readConfigFile file = In.runXDGIO $ In.maybeRead $ In.readConfigFile file
 
-readCacheFile :: FilePath -> IO ByteString
-readCacheFile file = In.runXDGIO $ In.readCacheFile file
+readCacheFile :: FilePath -> IO (Maybe ByteString)
+readCacheFile file = In.runXDGIO $ In.maybeRead $ In.readCacheFile file
 
-readStateFile :: FilePath -> IO ByteString
-readStateFile file = In.runXDGIO $ In.readStateFile file
+readStateFile :: FilePath -> IO (Maybe ByteString)
+readStateFile file = In.runXDGIO $ In.maybeRead $ In.readStateFile file
 
-readRuntimeFile :: FilePath -> IO ByteString
-readRuntimeFile file = In.runXDGIO $ In.readStateFile file
+readRuntimeFile :: FilePath -> IO (Maybe ByteString)
+readRuntimeFile file = In.runXDGIO $ In.maybeRead $ In.readStateFile file
 
 
