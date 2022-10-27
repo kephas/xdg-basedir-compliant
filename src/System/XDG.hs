@@ -13,13 +13,6 @@ raise a `MissingEnv` exception. This applies to @$HOME@ and @$XDG_RUNTIME_DIR@.
 module System.XDG where
 
 import           Data.ByteString.Lazy           ( ByteString )
-import           Data.Either                    ( fromRight )
-import           Polysemy
-import           Polysemy.Error                 ( runError )
-import           Polysemy.Operators
-import           System.XDG.Env
-import           System.XDG.Error
-import           System.XDG.FileSystem
 import qualified System.XDG.Internal           as In
 
 

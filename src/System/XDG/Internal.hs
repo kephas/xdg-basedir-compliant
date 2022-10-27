@@ -13,7 +13,6 @@ import           Polysemy.Error
 import           Polysemy.Operators
 import           Prelude                 hiding ( readFile )
 import           System.FilePath                ( (</>) )
-import qualified System.IO.Error               as IO
 import           System.XDG.Env
 import           System.XDG.Error
 import           System.XDG.FileSystem
@@ -107,14 +106,14 @@ appendEnvFiles
 appendEnvFiles getDirs parse file = do
   files <- map (</> file) <$> getDirs
   fold
-    <$> traverse (\file -> catch (parse <$> readFile file) (pure mempty)) files
+    <$> traverse (\path -> catch (parse <$> readFile path) (pure mempty)) files
 
 maybeRead :: XDGReader a a -> XDGReader a (Maybe a)
 maybeRead action = catch
   (Just <$> action)
   (\case
     NoReadableFile -> pure Nothing
-    error          -> throw error
+    err            -> throw err
   )
 
 
