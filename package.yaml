@@ -1,5 +1,5 @@
 name:                xdg-basedir-compliant
-version:             1.0.0
+version:             1.0.2
 github:              "kephas/xdg-basedir-compliant"
 license:             BSD3
 author:              "Pierre Thierry"
