@@ -29,8 +29,8 @@ This is a compliant implementation of the [XDG Base Directory Specification](htt
   - [X] read file
   - [ ] write file
 - [ ] `$XDG_RUNTIME_DIR`
-  - [ ] get path
-  - [ ] read file
+  - [X] get path
+  - [X] read file
   - [ ] write file
 
 # Build

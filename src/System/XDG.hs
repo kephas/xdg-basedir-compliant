@@ -14,38 +14,36 @@ import qualified System.XDG.Internal           as In
 
 
 getDataHome :: IO FilePath
-getDataHome = runM $ runEnvIO $ In.getDataHome
+getDataHome = In.runXDGIO In.getDataHome
 
 getConfigHome :: IO FilePath
-getConfigHome = runM $ runEnvIO $ In.getConfigHome
+getConfigHome = In.runXDGIO In.getConfigHome
 
 getStateHome :: IO FilePath
-getStateHome = runM $ runEnvIO $ In.getStateHome
+getStateHome = In.runXDGIO In.getStateHome
 
 getCacheHome :: IO FilePath
-getCacheHome = runM $ runEnvIO $ In.getCacheHome
+getCacheHome = In.runXDGIO In.getCacheHome
 
 getDataDirs :: IO [FilePath]
-getDataDirs = runM $ runEnvIO $ In.getDataDirs
+getDataDirs = In.runXDGIO In.getDataDirs
 
 readDataFile :: FilePath -> IO ByteString
-readDataFile = In.readFileIO In.readDataFile
+readDataFile file = In.runXDGIO $ In.readDataFile file
 
 readData :: Monoid b => (ByteString -> b) -> FilePath -> IO b
-readData parse file = do
-  fromRight mempty
-    <$> runM (runError $ runReadFileIO $ runEnvIO $ In.readData parse file)
+readData parse file = In.runXDGIO $ In.readData parse file
 
 getConfigDirs :: IO [FilePath]
-getConfigDirs = runM $ runEnvIO $ In.getConfigDirs
+getConfigDirs = In.runXDGIO In.getConfigDirs
 
 readConfigFile :: FilePath -> IO ByteString
-readConfigFile = In.readFileIO In.readConfigFile
+readConfigFile file = In.runXDGIO $ In.readConfigFile file
 
 readCacheFile :: FilePath -> IO ByteString
-readCacheFile = In.readFileIO In.readCacheFile
+readCacheFile file = In.runXDGIO $ In.readCacheFile file
 
 readStateFile :: FilePath -> IO ByteString
-readStateFile = In.readFileIO In.readStateFile
+readStateFile file = In.runXDGIO $ In.readStateFile file
 
 

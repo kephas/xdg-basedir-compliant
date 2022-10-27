@@ -3,6 +3,7 @@
 
 module System.XDG.Internal where
 
+import qualified Control.Exception             as IO
 import           Data.ByteString.Lazy           ( ByteString )
 import           Data.Foldable                  ( fold )
 import           Data.List.Split                ( endBy )
@@ -109,15 +110,7 @@ appendEnvFiles getDirs parse file = do
     <$> traverse (\file -> catch (parse <$> readFile file) (pure mempty)) files
 
 
-readFileIO
-  :: (FilePath -> '[Env, Error XDGError, ReadFile ByteString] >@> ByteString)
-  -> FilePath
-  -> IO ByteString
-readFileIO reader file = do
-  result <- runM $ runError $ runReadFileIO $ runEnvIO $ reader file
-  either raiseIO pure result
- where
-  raiseIO _error = IO.ioError $ IO.mkIOError IO.doesNotExistErrorType
-                                             "System.XDG.readConfigFile"
-                                             Nothing
-                                             (Just file)
+runXDGIO :: XDGReader ByteString a -> IO a
+runXDGIO action = do
+  result <- runM $ runError $ runReadFileIO $ runEnvIO action
+  either IO.throwIO pure result
