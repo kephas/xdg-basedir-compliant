@@ -1,32 +1,30 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-
-import           Data.Aeson                     ( decode )
-import           Data.ByteString.Lazy           ( ByteString )
-import           Data.List                      ( intercalate )
-import           Data.Maybe                     ( fromJust
-                                                , fromMaybe
-                                                )
-import           Data.Monoid                    ( Sum(..) )
-import           Data.String                    ( IsString(..) )
-import           Path                    hiding ( (</>) )
-import           Polysemy
-import           Polysemy.Error
-import           Polysemy.Operators
-import           System.Directory               ( getCurrentDirectory )
-import           System.Environment             ( setEnv )
-import           System.FilePath                ( (</>) )
-import qualified System.XDG                    as XDGIO
-import           System.XDG.Env
-import           System.XDG.Error
-import           System.XDG.FileSystem
-import           System.XDG.Internal
-import           Test.Hspec
-
+import Data.Aeson (decode)
+import Data.ByteString.Lazy (ByteString)
+import Data.List (intercalate)
+import Data.Maybe (
+  fromJust,
+  fromMaybe,
+ )
+import Data.Monoid (Sum (..))
+import Data.String (IsString (..))
+import Path hiding ((</>))
+import Polysemy
+import Polysemy.Error
+import Polysemy.Operators
+import System.Directory (getCurrentDirectory)
+import System.Environment (setEnv)
+import System.FilePath ((</>))
+import qualified System.XDG as XDGIO
+import System.XDG.Env
+import System.XDG.Error
+import System.XDG.FileSystem
+import System.XDG.Internal
+import Test.Hspec
 
 instance IsString (Path Abs Dir) where
   fromString = fromMaybe undefined . parseAbsDir
@@ -34,58 +32,54 @@ instance IsString (Path Abs Dir) where
 instance IsString (Path Abs File) where
   fromString = fromMaybe undefined . parseAbsFile
 
-
-
 bareEnv :: EnvList
 bareEnv = [("HOME", "/alice")]
 
 fullEnv :: EnvList
 fullEnv =
-  [ ("HOME"           , "/alice")
+  [ ("HOME", "/alice")
   , ("XDG_CONFIG_HOME", "/config")
-  , ("XDG_DATA_HOME"  , "/data")
-  , ("XDG_STATE_HOME" , "/state")
-  , ("XDG_CACHE_HOME" , "/cache")
+  , ("XDG_DATA_HOME", "/data")
+  , ("XDG_STATE_HOME", "/state")
+  , ("XDG_CACHE_HOME", "/cache")
   , ("XDG_RUNTIME_DIR", "/runtime")
   ]
 
 badEnv :: EnvList
 badEnv =
-  [ ("HOME"         , "/alice")
+  [ ("HOME", "/alice")
   , ("XDG_DATA_HOME", "data/")
   , ("XDG_DATA_DIRS", "/foo:./bar:/baz:foo/../bar")
   ]
 
-
 userFiles :: FileList Integer
 userFiles =
-  [ ("/data/foo/bar"   , 1)
-  , ("/config/foo/bar" , 10)
-  , ("/state/foo/bar"  , 100)
-  , ("/cache/foo/bar"  , 200)
+  [ ("/data/foo/bar", 1)
+  , ("/config/foo/bar", 10)
+  , ("/state/foo/bar", 100)
+  , ("/cache/foo/bar", 200)
   , ("/runtime/foo/bar", 300)
   ]
 
 sysFiles :: FileList Integer
 sysFiles =
   [ ("/usr/local/share/foo/bar", 2)
-  , ("/usr/share/foo/bar"      , 3)
-  , ("/etc/xdg/foo/bar"        , 20)
+  , ("/usr/share/foo/bar", 3)
+  , ("/etc/xdg/foo/bar", 20)
   ]
 
 allFiles :: FileList Integer
 allFiles = userFiles ++ sysFiles
 
-testXDG
-  :: EnvList
-  -> FileList Integer
-  -> '[Env , ReadFile Integer , Error XDGError] @> a
-  -> Either XDGError a
+testXDG ::
+  EnvList ->
+  FileList Integer ->
+  '[Env, ReadFile Integer, Error XDGError] @> a ->
+  Either XDGError a
 testXDG env files = run . runError . runReadFileList files . runEnvList env
 
 decodeInteger :: ByteString -> Sum Integer
 decodeInteger = Sum . fromMaybe 0 . decode
-
 
 main :: IO ()
 main = hspec $ do
@@ -133,14 +127,14 @@ main = hspec $ do
       it "opens a data file" $ do
         cwd <- getCurrentDirectory
         setEnv "XDG_DATA_HOME" $ cwd </> "test/dir1"
-        setEnv "XDG_DATA_DIRS" $ intercalate ":" $ map
-          (cwd </>)
-          ["test/dir2", "test/dir3"]
+        setEnv "XDG_DATA_DIRS" $
+          intercalate ":" $
+            map
+              (cwd </>)
+              ["test/dir2", "test/dir3"]
         (decodeInteger . fromJust)
-          <$>            XDGIO.readDataFile "foo/bar.json"
+          <$> XDGIO.readDataFile "foo/bar.json"
           `shouldReturn` 1
       it "merges data files" $ do
         XDGIO.readData decodeInteger "foo/bar.json" `shouldReturn` 3
         XDGIO.readData decodeInteger "foo/baz.json" `shouldReturn` 30
-
-

@@ -1,5 +1,3 @@
-{-# LANGUAGE DataKinds #-}
-
 {-|
 Module      : System.XDG
 Description : XDG Basedir functions
