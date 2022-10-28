@@ -9,37 +9,42 @@ These functions implement the [XDG Base Directory Specification](https://specifi
 
 When an environment variable is missing that must be defined, they will
 raise a `MissingEnv` exception. This applies to @$HOME@ and @$XDG_RUNTIME_DIR@.
+
+As per the specification, these functions will treat any relative path in the
+environment variables as invalid. They will be skipped when operating on a list of
+paths. Functions that return a single path will raise an `InvalidPath` exception.
 -}
 module System.XDG where
 
 import           Data.ByteString.Lazy           ( ByteString )
+import           Path                           ( fromAbsDir )
 import qualified System.XDG.Internal           as In
 
 
 {-| Returns the content of @$XDG_DATA_HOME@ or its default value. -}
 getDataHome :: IO FilePath
-getDataHome = In.runXDGIO In.getDataHome
+getDataHome = fromAbsDir <$> In.runXDGIO In.getDataHome
 
 {-| Returns the content of @$XDG_CONFIG_HOME@ or its default value. -}
 getConfigHome :: IO FilePath
-getConfigHome = In.runXDGIO In.getConfigHome
+getConfigHome = fromAbsDir <$> In.runXDGIO In.getConfigHome
 
 {-| Returns the content of @$XDG_STATE_HOME@ or its default value. -}
 getStateHome :: IO FilePath
-getStateHome = In.runXDGIO In.getStateHome
+getStateHome = fromAbsDir <$> In.runXDGIO In.getStateHome
 
 {-| Returns the content of @$XDG_CACHE_HOME@ or its default value. -}
 getCacheHome :: IO FilePath
-getCacheHome = In.runXDGIO In.getCacheHome
+getCacheHome = fromAbsDir <$> In.runXDGIO In.getCacheHome
 
 {-| Returns the content of @$XDG_RUNTIME_DIR@. -}
 getRuntimeDir :: IO FilePath
-getRuntimeDir = In.runXDGIO In.getRuntimeDir
+getRuntimeDir = fromAbsDir <$> In.runXDGIO In.getRuntimeDir
 
 {-| Returns the list of data dirs taken from @$XDG_DATA_HOME@ and
 @$XDG_DATA_DIRS@ or their default values. -}
 getDataDirs :: IO [FilePath]
-getDataDirs = In.runXDGIO In.getDataDirs
+getDataDirs = map fromAbsDir <$> In.runXDGIO In.getDataDirs
 
 {-| Returns the content of the first readable file in the data dirs if there is one.
 It will try the files in order of decreasing imporance.
@@ -62,7 +67,7 @@ readData parse file = In.runXDGIO $ In.readData parse file
 {-| Returns the list of config dirs taken from @$XDG_CONFIG_HOME@ and
 @$XDG_CONFIG_DIRS@ or their default values. -}
 getConfigDirs :: IO [FilePath]
-getConfigDirs = In.runXDGIO In.getConfigDirs
+getConfigDirs = map fromAbsDir <$> In.runXDGIO In.getConfigDirs
 
 {-| Returns the content of the first readable file in the config dirs if there is one.
 It will try the files in order of decreasing imporance.

@@ -1,5 +1,5 @@
 name:                xdg-basedir-compliant
-version:             1.0.2
+version:             1.1.0
 github:              "kephas/xdg-basedir-compliant"
 license:             BSD3
 author:              "Pierre Thierry"
@@ -8,6 +8,7 @@ copyright:           "2022 Pierre Thierry"
 
 extra-source-files:
 - README.md
+- CHANGELOG
 
 # Metadata used when publishing your package
 synopsis:            XDG Basedir
@@ -17,7 +18,9 @@ description:         See README.md
 dependencies:
 - base >= 4.7 && < 5
 - bytestring
+- directory
 - filepath
+- path
 - polysemy
 - polysemy-plugin
 - polysemy-zoo

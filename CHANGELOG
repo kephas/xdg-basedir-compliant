@@ -1,0 +1,2 @@
+1.1.0
+  * BREAKING CHANGE: now relative paths are treated as invalid

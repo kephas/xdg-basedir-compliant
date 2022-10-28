@@ -4,6 +4,7 @@ module System.XDG.FileSystem where
 
 import qualified Control.Exception             as IO
 import qualified Data.ByteString.Lazy          as BS
+import           Path
 import           Polysemy
 import           Polysemy.Error
 import qualified System.IO.Error               as IO
@@ -11,12 +12,12 @@ import           System.XDG.Error
 
 
 data ReadFile f m a where
-  ReadFile ::FilePath -> ReadFile f m f
+  ReadFile ::Path Abs File -> ReadFile f m f
 
 makeSem ''ReadFile
 
 
-type FileList a = [(FilePath, a)]
+type FileList a = [(Path Abs File, a)]
 
 
 runReadFileList
@@ -34,6 +35,6 @@ runReadFileIO = interpret
     let notFound :: IO.IOException -> Maybe XDGError
         notFound e =
           if IO.isDoesNotExistError e then Just $ FileNotFound path else Nothing
-    result <- embed $ IO.tryJust notFound $ BS.readFile path
+    result <- embed $ IO.tryJust notFound $ BS.readFile $ toFilePath path
     either throw pure result
   )

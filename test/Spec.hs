@@ -1,21 +1,39 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 
 import           Data.Aeson                     ( decode )
 import           Data.ByteString.Lazy           ( ByteString )
+import           Data.List                      ( intercalate )
 import           Data.Maybe                     ( fromJust
                                                 , fromMaybe
                                                 )
 import           Data.Monoid                    ( Sum(..) )
+import           Data.String                    ( IsString(..) )
+import           Path                    hiding ( (</>) )
 import           Polysemy
 import           Polysemy.Error
 import           Polysemy.Operators
+import           System.Directory               ( getCurrentDirectory )
 import           System.Environment             ( setEnv )
+import           System.FilePath                ( (</>) )
 import qualified System.XDG                    as XDGIO
 import           System.XDG.Env
 import           System.XDG.Error
 import           System.XDG.FileSystem
 import           System.XDG.Internal
 import           Test.Hspec
+
+
+instance IsString (Path Abs Dir) where
+  fromString = fromMaybe undefined . parseAbsDir
+
+instance IsString (Path Abs File) where
+  fromString = fromMaybe undefined . parseAbsFile
+
 
 
 bareEnv :: EnvList
@@ -30,6 +48,14 @@ fullEnv =
   , ("XDG_CACHE_HOME" , "/cache")
   , ("XDG_RUNTIME_DIR", "/runtime")
   ]
+
+badEnv :: EnvList
+badEnv =
+  [ ("HOME"         , "/alice")
+  , ("XDG_DATA_HOME", "data/")
+  , ("XDG_DATA_DIRS", "/foo:./bar:/baz:foo/../bar")
+  ]
+
 
 userFiles :: FileList Integer
 userFiles =
@@ -68,6 +94,8 @@ main = hspec $ do
       it "finds the data home" $ do
         testXDG bareEnv [] getDataHome `shouldBe` Right "/alice/.local/share"
         testXDG fullEnv [] getDataHome `shouldBe` Right "/data"
+        testXDG badEnv [] getDataDirs
+          `shouldBe` Right ["/alice/.local/share", "/foo", "/baz"]
       it "finds the config home" $ do
         testXDG bareEnv [] getConfigHome `shouldBe` Right "/alice/.config"
         testXDG fullEnv [] getConfigHome `shouldBe` Right "/config"
@@ -103,11 +131,16 @@ main = hspec $ do
           `shouldBe` Right 300
     describe "IO interpreter" $ do
       it "opens a data file" $ do
-        setEnv "XDG_DATA_HOME" "./test/dir1"
-        setEnv "XDG_DATA_DIRS" "./test/dir2:./test/dir3"
+        cwd <- getCurrentDirectory
+        setEnv "XDG_DATA_HOME" $ cwd </> "test/dir1"
+        setEnv "XDG_DATA_DIRS" $ intercalate ":" $ map
+          (cwd </>)
+          ["test/dir2", "test/dir3"]
         (decodeInteger . fromJust)
           <$>            XDGIO.readDataFile "foo/bar.json"
           `shouldReturn` 1
       it "merges data files" $ do
         XDGIO.readData decodeInteger "foo/bar.json" `shouldReturn` 3
         XDGIO.readData decodeInteger "foo/baz.json" `shouldReturn` 30
+
+
