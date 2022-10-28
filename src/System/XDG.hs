@@ -8,13 +8,34 @@ These functions implement the [XDG Base Directory Specification](https://specifi
 
 
 When an environment variable is missing that must be defined, they will
-raise a `MissingEnv` exception. This applies to @$HOME@ and @$XDG_RUNTIME_DIR@.
+raise a `System.XDG.Error.MissingEnv` exception. This applies to @$HOME@ and @$XDG_RUNTIME_DIR@.
 
 As per the specification, these functions will treat any relative path in the
 environment variables as invalid. They will be skipped when operating on a list of
-paths. Functions that return a single path will raise an `InvalidPath` exception.
+paths. Functions that return a single path will raise an `System.XDG.Error.InvalidPath` exception.
 -}
-module System.XDG where
+module System.XDG
+  (
+  -- * Data
+    getDataHome
+  , getDataDirs
+  , readDataFile
+  , readData
+  -- * Config
+  , getConfigHome
+  , getConfigDirs
+  , readConfigFile
+  , readConfig
+  -- * Cache
+  , getCacheHome
+  , readCacheFile
+  -- * State
+  , getStateHome
+  , readStateFile
+  -- * Runtime
+  , getRuntimeDir
+  , readRuntimeFile
+  ) where
 
 import           Data.ByteString.Lazy           ( ByteString )
 import           Path                           ( fromAbsDir )
