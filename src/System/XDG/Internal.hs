@@ -27,6 +27,10 @@ getConfigHome = getEnvHome "XDG_CONFIG_HOME" ".config"
 getStateHome :: Env -@> FilePath
 getStateHome = getEnvHome "XDG_STATE_HOME" ".local/state"
 
+getRuntimeDir :: '[Env, Error XDGError] >@> FilePath
+getRuntimeDir = fromMaybe (throw $ MissingEnv env) getEnv env
+  where env = "XDG_RUNTIME_DIR"
+
 getDataDirs :: Env -@> [FilePath]
 getDataDirs =
   getEnvDirs getDataHome "XDG_DATA_DIRS" ["/usr/local/share/", "/usr/share/"]
