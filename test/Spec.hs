@@ -16,6 +16,7 @@ import Path hiding ((</>))
 import Polysemy
 import Polysemy.Error
 import Polysemy.Operators
+import Polysemy.State
 import System.Directory (getCurrentDirectory)
 import System.Environment (setEnv)
 import System.FilePath ((</>))
@@ -74,9 +75,9 @@ allFiles = userFiles ++ sysFiles
 testXDG ::
   EnvList ->
   FileList Integer ->
-  '[Env, ReadFile Integer, Error XDGError] @> a ->
+  '[Env, ReadFile Integer, WriteFile Integer, State (FileMap Integer), Error XDGError] @> a ->
   Either XDGError a
-testXDG env files = run . runError . runReadFileList files . runEnvList env
+testXDG env files = run . runError . runReadWriteFileList files . runEnvList env
 
 decodeInteger :: ByteString -> Sum Integer
 decodeInteger = Sum . fromMaybe 0 . decode
@@ -123,6 +124,8 @@ main = hspec $ do
       it "opens a runtime file" $ do
         testXDG fullEnv userFiles (readRuntimeFile "foo/bar")
           `shouldBe` Right 300
+      it "writes a config file" $ do
+        testXDG fullEnv userFiles (writeConfigFile "foo/bar" 1000 >> readConfigFile "foo/bar") `shouldBe` Right 1000
     describe "IO interpreter" $ do
       it "opens a data file" $ do
         cwd <- getCurrentDirectory

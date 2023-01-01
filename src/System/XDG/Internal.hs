@@ -28,7 +28,7 @@ import Polysemy.Operators
 import System.XDG.Env
 import System.XDG.Error
 import System.XDG.FileSystem
-import Prelude hiding (readFile)
+import Prelude hiding (readFile, writeFile)
 
 getDataHome :: XDGEnv (Path Abs Dir)
 getDataHome = getEnvHome "XDG_DATA_HOME" $(mkRelDir ".local/share")
@@ -78,6 +78,8 @@ readRuntimeFile = readFileFromDir getRuntimeDir
 type XDGEnv a = '[Env, Error XDGError] >@> a
 
 type XDGReader a b = '[Env, Error XDGError, ReadFile a] >@> b
+
+type XDGWriter a b = '[Env, Error XDGError, ReadFile a, WriteFile a] >@> b
 
 requireEnv :: String -> XDGEnv String
 requireEnv env = maybe (throw $ MissingEnv env) pure =<< getEnv env
@@ -137,6 +139,12 @@ maybeRead action =
         NoReadableFile -> pure Nothing
         err -> throw err
     )
+
+writeConfigFile :: FilePath -> a -> XDGWriter a ()
+writeConfigFile subPath value = do
+  subFile <- requireRelFile subPath
+  dir <- getConfigHome
+  writeFile (dir </> subFile) value
 
 runXDGIO :: XDGReader ByteString a -> IO a
 runXDGIO action = do
