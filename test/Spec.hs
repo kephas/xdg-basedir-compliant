@@ -128,6 +128,12 @@ main = hspec $ do
         testXDG fullEnv userFiles (writeConfigFile "foo/bar" 1000 >> readConfigFile "foo/bar") `shouldBe` Right 1000
       it "writes a data file" $ do
         testXDG fullEnv userFiles (writeDataFile "foo/bar" 2000 >> readDataFile "foo/bar") `shouldBe` Right 2000
+      it "writes a cache file" $ do
+        testXDG fullEnv userFiles (writeCacheFile "foo/bar" 3000 >> readCacheFile "foo/bar") `shouldBe` Right 3000
+      it "writes a state file" $ do
+        testXDG fullEnv userFiles (writeStateFile "foo/bar" 4000 >> readStateFile "foo/bar") `shouldBe` Right 4000
+      it "writes a runtime file" $ do
+        testXDG fullEnv userFiles (writeRuntimeFile "foo/bar" 5000 >> readRuntimeFile "foo/bar") `shouldBe` Right 5000
     describe "IO interpreter" $ do
       it "opens a data file" $ do
         cwd <- getCurrentDirectory

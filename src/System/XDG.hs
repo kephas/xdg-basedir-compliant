@@ -29,12 +29,16 @@ module System.XDG
   -- * Cache
   , getCacheHome
   , readCacheFile
+  , writeCacheFile
   -- * State
   , getStateHome
   , readStateFile
+  , writeStateFile
   -- * Runtime
+  -- | The specification says that when @$XDG_RUNTIME_DIR@ isn't set, an application should fall back to a replacement directory and warn users. To that end, `getRuntimeDir` will raise a `System.XDG.Error.MissingEnv` exception when @$XDG_RUNTIME_DIR@ isn't set. The application can then set it to useful value and then use `readRuntimeFile` and `writeRuntimeFile`.
   , getRuntimeDir
   , readRuntimeFile
+  , writeRuntimeFile
   ) where
 
 import           Data.ByteString.Lazy           ( ByteString )
@@ -153,3 +157,30 @@ writeConfigFile file content = In.runXDGIO $ In.writeConfigFile file content
 -}
 writeDataFile :: FilePath -> ByteString -> IO ()
 writeDataFile file content = In.runXDGIO $ In.writeDataFile file content
+
+{-| Writes a cache file in the cache home if it is writable.
+
+@
+> writeCacheFile "subdir/filename" $ BS.pack [1, 2, 3]
+@
+-}
+writeCacheFile :: FilePath -> ByteString -> IO ()
+writeCacheFile file content = In.runXDGIO $ In.writeCacheFile file content
+
+{-| Writes a state file in the state home if it is writable.
+
+@
+> writeStateFile "subdir/filename" $ BS.pack [1, 2, 3]
+@
+-}
+writeStateFile :: FilePath -> ByteString -> IO ()
+writeStateFile file content = In.runXDGIO $ In.writeStateFile file content
+
+{-| Writes a runtime file in the runtime dir if it is writable.
+
+@
+> writeRuntimeFile "subdir/filename" $ BS.pack [1, 2, 3]
+@
+-}
+writeRuntimeFile :: FilePath -> ByteString -> IO ()
+writeRuntimeFile file content = In.runXDGIO $ In.writeRuntimeFile file content

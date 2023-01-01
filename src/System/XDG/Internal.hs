@@ -146,6 +146,15 @@ writeConfigFile = writeFileToDir getConfigHome
 writeDataFile :: FilePath -> a -> XDGWriter a ()
 writeDataFile = writeFileToDir getDataHome
 
+writeCacheFile :: FilePath -> a -> XDGWriter a ()
+writeCacheFile = writeFileToDir getCacheHome
+
+writeStateFile :: FilePath -> a -> XDGWriter a ()
+writeStateFile = writeFileToDir getStateHome
+
+writeRuntimeFile :: FilePath -> a -> XDGWriter a ()
+writeRuntimeFile = writeFileToDir getRuntimeDir
+
 writeFileToDir :: XDGEnv (Path Abs Dir) -> FilePath -> a -> XDGWriter a ()
 writeFileToDir getDir subPath value = do
   subFile <- requireRelFile subPath
