@@ -4,14 +4,14 @@ This is a compliant implementation of the [XDG Base Directory Specification](htt
 
 ## Compliance
 
-- [ ] `$XDG_DATA_HOME`
+- [X] `$XDG_DATA_HOME`
   - [X] get path
   - [X] read file
-  - [ ] write file
-- [ ] `$XDG_CONFIG_HOME`
+  - [X] write file
+- [X] `$XDG_CONFIG_HOME`
   - [X] get path
   - [X] read file
-  - [ ] write file
+  - [X] write file
 - [ ] `$XDG_STATE_HOME`
   - [X] get path
   - [X] read file

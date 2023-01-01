@@ -141,12 +141,18 @@ maybeRead action =
     )
 
 writeConfigFile :: FilePath -> a -> XDGWriter a ()
-writeConfigFile subPath value = do
+writeConfigFile = writeFileToDir getConfigHome
+
+writeDataFile :: FilePath -> a -> XDGWriter a ()
+writeDataFile = writeFileToDir getDataHome
+
+writeFileToDir :: XDGEnv (Path Abs Dir) -> FilePath -> a -> XDGWriter a ()
+writeFileToDir getDir subPath value = do
   subFile <- requireRelFile subPath
-  dir <- getConfigHome
+  dir <- getDir
   writeFile (dir </> subFile) value
 
-runXDGIO :: XDGReader ByteString a -> IO a
+runXDGIO :: XDGWriter ByteString a -> IO a
 runXDGIO action = do
-  result <- runM $ runError $ runReadFileIO $ runEnvIO action
+  result <- runM $ runError $ runReadWriteFileIO $ runEnvIO action
   either IO.throwIO pure result

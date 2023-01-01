@@ -29,14 +29,6 @@ makeSem ''WriteFile
 
 type FileList a = [(Path Abs File, a)]
 
-runReadFileList ::
-  Member (Error XDGError) r => FileList a -> InterpreterFor (ReadFile a) r
-runReadFileList files =
-  interpret
-    ( \(ReadFile path) ->
-        maybe (throw $ FileNotFound path) pure $ lookup path files
-    )
-
 type FileMap a = M.Map (Path Abs File) a
 
 runReadWriteFileList ::
@@ -53,15 +45,21 @@ runReadWriteFileList files =
           maybe (throw $ FileNotFound path) pure $ M.lookup path fileMap
       )
 
-runReadFileIO ::
+runReadWriteFileIO ::
   Members '[Embed IO, Error XDGError] r =>
-  InterpreterFor (ReadFile BS.ByteString) r
-runReadFileIO =
+  Sem (ReadFile BS.ByteString ': WriteFile BS.ByteString ': r) a ->
+  Sem r a
+runReadWriteFileIO =
   interpret
-    ( \(ReadFile path) -> do
-        let notFound :: IO.IOException -> Maybe XDGError
-            notFound e =
-              if IO.isDoesNotExistError e then Just $ FileNotFound path else Nothing
-        result <- embed $ IO.tryJust notFound $ BS.readFile $ toFilePath path
+    ( \(WriteFile path content) -> do
+        result <- embed $ IO.tryJust (notFound path) $ BS.writeFile (toFilePath path) content
         either throw pure result
     )
+    . interpret
+      ( \(ReadFile path) -> do
+          result <- embed $ IO.tryJust (notFound path) $ BS.readFile $ toFilePath path
+          either throw pure result
+      )
+ where
+  notFound :: Path Abs File -> IO.IOException -> Maybe XDGError
+  notFound path e = if IO.isDoesNotExistError e then Just $ FileNotFound path else Nothing

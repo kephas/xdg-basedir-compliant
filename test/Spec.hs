@@ -17,7 +17,7 @@ import Polysemy
 import Polysemy.Error
 import Polysemy.Operators
 import Polysemy.State
-import System.Directory (getCurrentDirectory)
+import System.Directory (getCurrentDirectory, removeFile)
 import System.Environment (setEnv)
 import System.FilePath ((</>))
 import qualified System.XDG as XDGIO
@@ -126,6 +126,8 @@ main = hspec $ do
           `shouldBe` Right 300
       it "writes a config file" $ do
         testXDG fullEnv userFiles (writeConfigFile "foo/bar" 1000 >> readConfigFile "foo/bar") `shouldBe` Right 1000
+      it "writes a data file" $ do
+        testXDG fullEnv userFiles (writeDataFile "foo/bar" 2000 >> readDataFile "foo/bar") `shouldBe` Right 2000
     describe "IO interpreter" $ do
       it "opens a data file" $ do
         cwd <- getCurrentDirectory
@@ -141,3 +143,7 @@ main = hspec $ do
       it "merges data files" $ do
         XDGIO.readData decodeInteger "foo/bar.json" `shouldReturn` 3
         XDGIO.readData decodeInteger "foo/baz.json" `shouldReturn` 30
+      it "writes a data file" $ do
+        XDGIO.writeDataFile "foo/quux.json" "4"
+        (decodeInteger . fromJust) <$> XDGIO.readDataFile "foo/quux.json" `shouldReturn` 4
+        (</> "test/dir1/foo/quux.json") <$> getCurrentDirectory >>= removeFile

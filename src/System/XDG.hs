@@ -19,11 +19,13 @@ module System.XDG
   , getDataDirs
   , readDataFile
   , readData
+  , writeDataFile
   -- * Config
   , getConfigHome
   , getConfigDirs
   , readConfigFile
   , readConfig
+  , writeConfigFile
   -- * Cache
   , getCacheHome
   , readCacheFile
@@ -134,3 +136,20 @@ readRuntimeFile :: FilePath -> IO (Maybe ByteString)
 readRuntimeFile file = In.runXDGIO $ In.maybeRead $ In.readStateFile file
 
 
+{-| Writes a config file in the config home if it is writable.
+
+@
+> writeConfigFile "subdir/filename" $ BS.pack [1, 2, 3]
+@
+-}
+writeConfigFile :: FilePath -> ByteString -> IO ()
+writeConfigFile file content = In.runXDGIO $ In.writeConfigFile file content
+
+{-| Writes a data file in the data home if it is writable.
+
+@
+> writeDataFile "subdir/filename" $ BS.pack [1, 2, 3]
+@
+-}
+writeDataFile :: FilePath -> ByteString -> IO ()
+writeDataFile file content = In.runXDGIO $ In.writeDataFile file content
