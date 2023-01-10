@@ -30,58 +30,75 @@ import System.XDG.Error
 import System.XDG.FileSystem
 import Prelude hiding (readFile, writeFile)
 
-getDataHome :: XDGEnv (Path Abs Dir)
+type EnvAction a = '[Env, Error XDGError] >@> a
+
+type ReadAction a b = '[Env, Error XDGError, ReadFile a] >@> b
+
+type WriteAction a b = '[Env, Error XDGError, ReadFile a, WriteFile a] >@> b
+
+getDataHome :: EnvAction (Path Abs Dir)
 getDataHome = getEnvHome "XDG_DATA_HOME" $(mkRelDir ".local/share")
 
-getConfigHome :: XDGEnv (Path Abs Dir)
+getConfigHome :: EnvAction (Path Abs Dir)
 getConfigHome = getEnvHome "XDG_CONFIG_HOME" $(mkRelDir ".config")
 
-getStateHome :: XDGEnv (Path Abs Dir)
+getStateHome :: EnvAction (Path Abs Dir)
 getStateHome = getEnvHome "XDG_STATE_HOME" $(mkRelDir ".local/state")
 
-getCacheHome :: XDGEnv (Path Abs Dir)
+getCacheHome :: EnvAction (Path Abs Dir)
 getCacheHome = getEnvHome "XDG_CACHE_HOME" $(mkRelDir ".local/cache")
 
-getRuntimeDir :: XDGEnv (Path Abs Dir)
+getRuntimeDir :: EnvAction (Path Abs Dir)
 getRuntimeDir = do
   dir <- requireEnv "XDG_RUNTIME_DIR"
   requireAbsDir dir
 
-getDataDirs :: XDGEnv [Path Abs Dir]
+getDataDirs :: EnvAction [Path Abs Dir]
 getDataDirs =
   getEnvDirs getDataHome "XDG_DATA_DIRS" ["/usr/local/share/", "/usr/share/"]
 
-readDataFile :: FilePath -> '[Env, Error XDGError, ReadFile a] >@> a
+readDataFile :: FilePath -> ReadAction a a
 readDataFile = readFileFromDirs getDataDirs
 
-readData :: Monoid b => (a -> b) -> FilePath -> XDGReader a b
+readData :: Monoid b => (a -> b) -> FilePath -> ReadAction a b
 readData = appendEnvFiles getDataDirs
 
-getConfigDirs :: XDGEnv [Path Abs Dir]
+getConfigDirs :: EnvAction [Path Abs Dir]
 getConfigDirs = getEnvDirs getConfigHome "XDG_CONFIG_DIRS" ["/etc/xdg"]
 
-readConfigFile :: FilePath -> '[Env, Error XDGError, ReadFile a] >@> a
+readConfigFile :: FilePath -> ReadAction a a
 readConfigFile = readFileFromDirs getConfigDirs
 
-readConfig :: Monoid b => (a -> b) -> FilePath -> XDGReader a b
+readConfig :: Monoid b => (a -> b) -> FilePath -> ReadAction a b
 readConfig = appendEnvFiles getConfigDirs
 
-readStateFile :: FilePath -> XDGReader a a
+readStateFile :: FilePath -> ReadAction a a
 readStateFile = readFileFromDir getStateHome
 
-readCacheFile :: FilePath -> XDGReader a a
+readCacheFile :: FilePath -> ReadAction a a
 readCacheFile = readFileFromDir getCacheHome
 
-readRuntimeFile :: FilePath -> XDGReader a a
+readRuntimeFile :: FilePath -> ReadAction a a
 readRuntimeFile = readFileFromDir getRuntimeDir
 
-type XDGEnv a = '[Env, Error XDGError] >@> a
+writeConfigFile :: FilePath -> a -> WriteAction a ()
+writeConfigFile = writeFileToDir getConfigHome
 
-type XDGReader a b = '[Env, Error XDGError, ReadFile a] >@> b
+writeDataFile :: FilePath -> a -> WriteAction a ()
+writeDataFile = writeFileToDir getDataHome
 
-type XDGWriter a b = '[Env, Error XDGError, ReadFile a, WriteFile a] >@> b
+writeCacheFile :: FilePath -> a -> WriteAction a ()
+writeCacheFile = writeFileToDir getCacheHome
 
-requireEnv :: String -> XDGEnv String
+writeStateFile :: FilePath -> a -> WriteAction a ()
+writeStateFile = writeFileToDir getStateHome
+
+writeRuntimeFile :: FilePath -> a -> WriteAction a ()
+writeRuntimeFile = writeFileToDir getRuntimeDir
+
+-- Helpers
+
+requireEnv :: String -> EnvAction String
 requireEnv env = maybe (throw $ MissingEnv env) pure =<< getEnv env
 
 requireAbsDir :: FilePath -> (Error XDGError) -@> Path Abs Dir
@@ -90,7 +107,7 @@ requireAbsDir path = maybe (throw $ InvalidPath path) pure $ parseAbsDir path
 requireRelFile :: FilePath -> (Error XDGError) -@> Path Rel File
 requireRelFile path = maybe (throw $ InvalidPath path) pure $ parseRelFile path
 
-getEnvHome :: String -> Path Rel Dir -> XDGEnv (Path Abs Dir)
+getEnvHome :: String -> Path Rel Dir -> EnvAction (Path Abs Dir)
 getEnvHome env defaultDir = do
   dir <- (>>= parseAbsDir) <$> getEnv env
   maybe getDefault pure dir
@@ -101,7 +118,7 @@ getEnvHome env defaultDir = do
     pure $ home' </> defaultDir
 
 getEnvDirs ::
-  (XDGEnv (Path Abs Dir)) -> String -> [String] -> XDGEnv [Path Abs Dir]
+  (EnvAction (Path Abs Dir)) -> String -> [String] -> EnvAction [Path Abs Dir]
 getEnvDirs getUserDir env defaultDirs = do
   userDir <- catch (Just <$> getUserDir) (const $ pure Nothing)
   dirs <- fromMaybe defaultDirs . noEmpty . fmap (endBy ":") <$> getEnv env
@@ -110,13 +127,13 @@ getEnvDirs getUserDir env defaultDirs = do
   noEmpty (Just []) = Nothing
   noEmpty x = x
 
-readFileFromDir :: XDGEnv (Path Abs Dir) -> FilePath -> XDGReader a a
+readFileFromDir :: EnvAction (Path Abs Dir) -> FilePath -> ReadAction a a
 readFileFromDir getDir subPath = do
   subFile <- requireRelFile subPath
   dir <- getDir
   readFile $ dir </> subFile
 
-readFileFromDirs :: XDGEnv [Path Abs Dir] -> FilePath -> XDGReader a a
+readFileFromDirs :: EnvAction [Path Abs Dir] -> FilePath -> ReadAction a a
 readFileFromDirs getDirs subPath = do
   subFile <- requireRelFile subPath
   let tryOne dir next = catch (readFile $ dir </> subFile) (const next)
@@ -124,14 +141,14 @@ readFileFromDirs getDirs subPath = do
   foldr tryOne (throw NoReadableFile) dirs
 
 appendEnvFiles ::
-  Monoid b => XDGEnv [Path Abs Dir] -> (a -> b) -> FilePath -> XDGReader a b
+  Monoid b => EnvAction [Path Abs Dir] -> (a -> b) -> FilePath -> ReadAction a b
 appendEnvFiles getDirs parse subPath = do
   subFile <- requireRelFile subPath
   files <- map (</> subFile) <$> getDirs
   fold
     <$> traverse (\path -> catch (parse <$> readFile path) (pure mempty)) files
 
-maybeRead :: XDGReader a a -> XDGReader a (Maybe a)
+maybeRead :: ReadAction a a -> ReadAction a (Maybe a)
 maybeRead action =
   catch
     (Just <$> action)
@@ -140,28 +157,13 @@ maybeRead action =
         err -> throw err
     )
 
-writeConfigFile :: FilePath -> a -> XDGWriter a ()
-writeConfigFile = writeFileToDir getConfigHome
-
-writeDataFile :: FilePath -> a -> XDGWriter a ()
-writeDataFile = writeFileToDir getDataHome
-
-writeCacheFile :: FilePath -> a -> XDGWriter a ()
-writeCacheFile = writeFileToDir getCacheHome
-
-writeStateFile :: FilePath -> a -> XDGWriter a ()
-writeStateFile = writeFileToDir getStateHome
-
-writeRuntimeFile :: FilePath -> a -> XDGWriter a ()
-writeRuntimeFile = writeFileToDir getRuntimeDir
-
-writeFileToDir :: XDGEnv (Path Abs Dir) -> FilePath -> a -> XDGWriter a ()
+writeFileToDir :: EnvAction (Path Abs Dir) -> FilePath -> a -> WriteAction a ()
 writeFileToDir getDir subPath value = do
   subFile <- requireRelFile subPath
   dir <- getDir
   writeFile (dir </> subFile) value
 
-runXDGIO :: XDGWriter ByteString a -> IO a
+runXDGIO :: WriteAction ByteString a -> IO a
 runXDGIO action = do
   result <- runM $ runError $ runReadWriteFileIO $ runEnvIO action
   either IO.throwIO pure result
