@@ -9,6 +9,7 @@ copyright:           "2022–2023 Pierre Thierry"
 extra-source-files:
 - README.md
 - CHANGELOG
+- test/dir*/*/*
 
 # Metadata used when publishing your package
 synopsis:            XDG Basedir

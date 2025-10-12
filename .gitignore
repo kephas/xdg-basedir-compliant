@@ -1,7 +1,5 @@
-*.cabal
 cabal.project.local
 dist-newstyle
-
-.envrc
+result
 .direnv
 .dir-locals.el
