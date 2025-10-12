@@ -15,5 +15,5 @@ data XDGError
 
 instance Exception XDGError
 
-throwIOLeft :: Exception e => Either e a -> IO a
+throwIOLeft :: (Exception e) => Either e a -> IO a
 throwIOLeft = either throwIO pure

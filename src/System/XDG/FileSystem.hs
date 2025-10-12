@@ -32,7 +32,7 @@ type FileList a = [(Path Abs File, a)]
 type FileMap a = M.Map (Path Abs File) a
 
 runReadWriteFileList ::
-  Member (Error XDGError) r =>
+  (Member (Error XDGError) r) =>
   FileList a ->
   Sem (ReadFile a ': WriteFile a ': State (FileMap a) ': r) b ->
   Sem r b
@@ -46,7 +46,7 @@ runReadWriteFileList files =
       )
 
 runReadWriteFileIO ::
-  Members '[Embed IO, Error XDGError] r =>
+  (Members '[Embed IO, Error XDGError] r) =>
   Sem (ReadFile BS.ByteString ': WriteFile BS.ByteString ': r) a ->
   Sem r a
 runReadWriteFileIO =

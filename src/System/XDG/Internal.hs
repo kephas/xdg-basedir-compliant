@@ -60,7 +60,7 @@ getDataDirs =
 readDataFile :: FilePath -> ReadAction a a
 readDataFile = readFileFromDirs getDataDirs
 
-readData :: Monoid b => (a -> b) -> FilePath -> ReadAction a b
+readData :: (Monoid b) => (a -> b) -> FilePath -> ReadAction a b
 readData = appendEnvFiles getDataDirs
 
 getConfigDirs :: EnvAction [Path Abs Dir]
@@ -69,7 +69,7 @@ getConfigDirs = getEnvDirs getConfigHome "XDG_CONFIG_DIRS" ["/etc/xdg"]
 readConfigFile :: FilePath -> ReadAction a a
 readConfigFile = readFileFromDirs getConfigDirs
 
-readConfig :: Monoid b => (a -> b) -> FilePath -> ReadAction a b
+readConfig :: (Monoid b) => (a -> b) -> FilePath -> ReadAction a b
 readConfig = appendEnvFiles getConfigDirs
 
 readStateFile :: FilePath -> ReadAction a a
@@ -141,7 +141,7 @@ readFileFromDirs getDirs subPath = do
   foldr tryOne (throw NoReadableFile) dirs
 
 appendEnvFiles ::
-  Monoid b => EnvAction [Path Abs Dir] -> (a -> b) -> FilePath -> ReadAction a b
+  (Monoid b) => EnvAction [Path Abs Dir] -> (a -> b) -> FilePath -> ReadAction a b
 appendEnvFiles getDirs parse subPath = do
   subFile <- requireRelFile subPath
   files <- map (</> subFile) <$> getDirs
